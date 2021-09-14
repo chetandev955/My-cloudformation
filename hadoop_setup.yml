@@ -1,0 +1,310 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create a variable number of EC2 instance resources.
+Parameters:
+  EnvironmentName:
+    Description: An environment name that is prefixed to resource names
+    Type: String
+  VpcCIDR:
+    Description: Please enter the IP range (CIDR notation) for this VPC
+    Type: String
+    Default: 172.31.0.0/16
+  PrivateSubnetACIDR:
+    Description: >-
+      Please enter the IP range (CIDR notation) for the private subnet in the
+      first Availability Zone
+    Type: String
+    Default: 172.31.0.0/20
+  PrivateSubnetBCIDR:
+    Description: >-
+      Please enter the IP range (CIDR notation) for the private subnet in the
+      second Availability Zone
+    Type: String
+    Default: 172.31.16.0/20
+  PrivateSubnetCCIDR:
+    Description: >-
+      Please enter the IP range (CIDR notation) for the private subnet in the
+      third Availability Zone
+    Type: String                                   
+    Default: 172.31.32.0/20
+  KeyName:
+    Description: The EC2 Key Pair to allow SSH access to the instances
+    Type: 'AWS::EC2::KeyPair::KeyName'
+    Default: region-virginia-training-demo-key
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.    
+  InstancePublicIP:
+    Description: >-
+      Specifies whether to launch instances with public IP addresses in your
+      VPC.
+    Type: String
+    Default: 'True'
+    AllowedValues:
+      - 'False'
+      - 'True'
+  InstanceCount:
+    Description: Number of EC2 instances (must be between 1 and 10).
+    Type: Number
+    Default: 1
+    MinValue: 1
+    MaxValue: 10
+    ConstraintDescription: Must be a number between 1 and 10.
+  ImageId:
+    Description: AMI for use with the EC2 instances
+    Type: String
+    Default: ami-0a23ccb2cdd9286bb
+    AllowedValues:
+      - ami-0a23ccb2cdd9286bb
+      - ami-cdbdd7a2
+  InstanceType:
+    Description: Instance type to launch EC2 instances.
+    Type: String
+    Default: m3.medium
+    AllowedValues: [ m3.medium, m3.large, m3.xlarge, m3.2xlarge, t2.micro, t2.medium, t3.micro ]
+Conditions:
+  Launch1: !Equals [1, 1]
+  Launch2: !Not [!Equals [1, !Ref InstanceCount]]
+  Launch3: !And
+  - !Not [!Equals [1, !Ref InstanceCount]]
+  - !Not [!Equals [2, !Ref InstanceCount]]
+  Launch4: !And
+  - !Not [!Equals [1, !Ref InstanceCount]]
+  - !Not [!Equals [2, !Ref InstanceCount]]
+  - !Not [!Equals [3, !Ref InstanceCount]]
+  Launch5: !And
+  - !Not [!Equals [1, !Ref InstanceCount]]
+  - !Not [!Equals [2, !Ref InstanceCount]]
+  - !Not [!Equals [3, !Ref InstanceCount]]
+  - !Not [!Equals [4, !Ref InstanceCount]]
+  Launch6: !Or
+  - !Equals [6, !Ref InstanceCount]
+  - !Equals [7, !Ref InstanceCount]
+  - !Equals [8, !Ref InstanceCount]
+  - !Equals [9, !Ref InstanceCount]
+  - !Equals [10, !Ref InstanceCount]
+  Launch7: !Or
+  - !Equals [7, !Ref InstanceCount]
+  - !Equals [8, !Ref InstanceCount]
+  - !Equals [9, !Ref InstanceCount]
+  - !Equals [10, !Ref InstanceCount]
+  Launch8: !Or
+  - !Equals [8, !Ref InstanceCount]
+  - !Equals [9, !Ref InstanceCount]
+  - !Equals [10, !Ref InstanceCount]
+  Launch9: !Or
+  - !Equals [9, !Ref InstanceCount]
+  - !Equals [10, !Ref InstanceCount]
+  Launch10: !Equals [10, !Ref InstanceCount]
+Resources:
+  VPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName} VPC'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 67dd92bf-800d-4fa7-9ae6-3c9cf2f17846
+    DeletionPolicy: Retain
+  PrivateSubnetA:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select 
+        - 0
+        - !GetAZs ''
+      CidrBlock: !Ref PrivateSubnetACIDR
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName} Private Subnet (A)'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 74f09520-2db6-44dc-a81d-587280d258f7
+    DeletionPolicy: Retain
+  PrivateSubnetB:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select 
+        - 1
+        - !GetAZs ''
+      CidrBlock: !Ref PrivateSubnetBCIDR
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName} Private Subnet (B)'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: ab5e3be6-176d-4e67-852e-3043df01478c
+    DeletionPolicy: Retain
+  PrivateSubnetC:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select 
+        - 2
+        - !GetAZs ''
+      CidrBlock: !Ref PrivateSubnetCCIDR
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName} Private Subnet (C)'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 0c7072c8-ebb9-4c65-b08c-17924196712f
+    DeletionPolicy: Retain
+  PrivateRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName} Private Route Table'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 02fa3d0d-e6af-4850-964d-ae1311448eb4
+    DeletionPolicy: Retain
+  PrivateSubnetARouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnetA
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 2ffc7b49-6301-4aec-93f9-d1f40aaad885
+  PrivateSubnetBRouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnetB
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 1b71df49-6464-4d4a-a804-cc1cc7da037d
+  PrivateSubnetCRouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnetC
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 7d2f6290-0751-45b8-991e-d13cf3126c7b
+  SecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable Only SSH From Anywhere
+      GroupName: !Sub '${EnvironmentName} Default SSH Security Group'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: 0.0.0.0/0
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName} Default SSH Security Group'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 034a9a56-def6-4746-8e3c-34e8f2b9b81f    
+  Instance1:
+    Condition: Launch1
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref InstanceType
+      SubnetId: !Ref PrivateSubnetA
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      KeyName: !Ref KeyName    
+  Instance2:
+    Condition: Launch2
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref InstanceType
+      SubnetId: !Ref PrivateSubnetB
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      KeyName: !Ref KeyName 
+  Instance3:
+    Condition: Launch3
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref InstanceType
+      SubnetId: !Ref PrivateSubnetC
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      KeyName: !Ref KeyName 
+  Instance4:
+    Condition: Launch4
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref InstanceType
+      SubnetId: !Ref PrivateSubnetA
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      KeyName: !Ref KeyName 
+  Instance5:
+    Condition: Launch5
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref InstanceType
+      SubnetId: !Ref PrivateSubnetB
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      KeyName: !Ref KeyName 
+  Instance6:
+    Condition: Launch6
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref InstanceType
+      SubnetId: !Ref PrivateSubnetC
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      KeyName: !Ref KeyName 
+  Instance7:
+    Condition: Launch7
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref InstanceType
+      SubnetId: !Ref PrivateSubnetA
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      KeyName: !Ref KeyName 
+  Instance8:
+    Condition: Launch8
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref InstanceType
+      SubnetId: !Ref PrivateSubnetB
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      KeyName: !Ref KeyName 
+  Instance9:
+    Condition: Launch9
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref InstanceType
+      SubnetId: !Ref PrivateSubnetC
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      KeyName: !Ref KeyName 
+  Instance10:
+    Condition: Launch10
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref InstanceType
+      SubnetId: !Ref PrivateSubnetA
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      KeyName: !Ref KeyName 
