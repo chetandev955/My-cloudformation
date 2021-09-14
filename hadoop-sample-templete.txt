@@ -1,0 +1,323 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  EnvironmentName:
+    Description: An environment name that is prefixed to resource names
+    Type: String
+  VpcCIDR:
+    Description: Please enter the IP range (CIDR notation) for this VPC
+    Type: String
+    Default: 172.31.0.0/16
+  PrivateSubnetCIDR:
+    Description: >-
+      Please enter the IP range (CIDR notation) for the private subnet in the
+      first Availability Zone
+    Type: String
+    Default: 172.31.0.0/20
+  PublicSubnetCIDR:
+    Description: >-
+      Please enter the IP range (CIDR notation) for the public subnet in the
+      first Availability Zone
+    Type: String
+    Default: 172.31.48.0/20
+  pubAvailabilityZone:
+    Description: The AvailabilityZone to use for the first subnet
+    Type: 'AWS::EC2::AvailabilityZone::Name'
+  privAvailabilityZone:
+    Description: The AvailabilityZone to use for the second subnet
+    Type: 'AWS::EC2::AvailabilityZone::Name'  
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+    ConstraintDescription: must be a valid EC2 instance type.
+  KeyName:
+    Description: The EC2 Key Pair to allow SSH access to the instances
+    Type: 'AWS::EC2::KeyPair::KeyName'
+    Default: region-virginia-training-demo-key
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.    
+  InstancePublicIP:
+    Description: >-
+      Specifies whether to launch instances with public IP addresses in your
+      VPC.
+    Type: String
+    Default: 'True'
+    AllowedValues:
+      - 'False'
+      - 'True'
+  InstanceAMI:
+    Description: AMI for use with the EC2 instances
+    Type: String
+    Default: ami-b63769a1
+    AllowedValues:
+      - ami-b63769a1
+      - ami-cdbdd7a2    
+Mappings:
+  RegionMap:
+    us-east-1:
+      '64': ami-b63769a1
+    ap-south-1:
+      '64': ami-cdbdd7a2        
+    
+Resources:
+  VPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName} VPC'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 67dd92bf-800d-4fa7-9ae6-3c9cf2f17846
+    DeletionPolicy: Retain    
+    
+  PrivateSubnet:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: 
+               Ref: privAvailabilityZone
+      CidrBlock: !Ref PrivateSubnetCIDR
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName} Private Subnet '
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 74f09520-2db6-44dc-a81d-587280d258f7
+    DeletionPolicy: Retain    
+  PublicSubnet:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: 
+                 Ref: pubAvailabilityZone
+      CidrBlock: !Ref PublicSubnetCIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName} Public Subnet '
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: b2600d03-b7d2-436c-bca5-080c15dd2c27
+    DeletionPolicy: Retain
+  InternetGateway:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties:
+      Tags:
+        - Key: Name
+          Value:
+            Ref: 'AWS::StackName'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: a8c917ec-ee69-4d4c-a528-c62c4996d5ec
+  GatewayAttachment:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      InternetGatewayId:
+        Ref: InternetGateway
+      VpcId:
+        Ref: VPC
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: e21978dd-2217-4279-8b14-5f9046bd5511    
+        
+  PublicRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName} Public Route Table'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 0ac0b48d-6225-4ff2-82c1-46273b7d8551
+    DeletionPolicy: Retain
+  PrivateRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName} Private Route Table'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 02fa3d0d-e6af-4850-964d-ae1311448eb4
+    DeletionPolicy: Retain        
+    
+  PubliceRoute:
+    Type: 'AWS::EC2::Route'
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: InternetGateway
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: f948628d-cb79-46d7-b203-10089108cb50
+  PublicSubnetARouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 943c7a15-c754-49e7-919d-f2acf3af9959        
+  PrivateSubnetARouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 2ffc7b49-6301-4aec-93f9-d1f40aaad885
+        
+  SecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable Only SSH From Anywhere
+      GroupName: !Sub '${EnvironmentName} Default SSH Security Group'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: 0.0.0.0/0
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName} Default SSH Security Group'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 034a9a56-def6-4746-8e3c-34e8f2b9b81f        
+  Hadoopmaster:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      KeyName: !Ref KeyName
+      ImageId: !FindInMap 
+        - RegionMap
+        - !Ref 'AWS::Region'
+        - 64
+      InstanceType: !Ref InstanceType
+      SubnetId: !Ref PrivateSubnet
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      UserData:
+        'Fn::Base64': !Sub >
+          #!/bin/bash -x
+
+          yum install -y httpd php php-mysql mysql-server
+
+          systemctl start httpd
+
+          systemctl start mysqld
+
+          groupadd www
+
+          usermod -a -G www ec2-user
+
+
+          # Download wordpress site & move to http
+
+          cd /var/www/
+
+          curl -O https://wordpress.org/latest.tar.gz && tar -zxf latest.tar.gz
+
+          rm -rf /var/www/html
+
+          mv wordpress /var/www/html
+
+
+          # Set the permissions
+
+          chown -R root:www /var/www
+
+          chmod 2775 /var/www
+
+          find /var/www -type d -exec chmod 2775 {} +
+
+          find /var/www -type f -exec chmod 0664 {} +
+
+
+          # SE Linux permissive
+
+          # needed to make wp connect to DB over newtork
+
+          setsebool -P httpd_can_network_connect=1
+
+          setsebool httpd_can_network_connect_db on
+
+
+          echo "<h1> Welcome to Valaxy Cloudformation Demo</h1>" >>
+          /var/www/html/index.html               
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 8c42d760-4a2b-45a0-9eeb-8a9398ef764d
+  Hadoopworker:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      KeyName: !Ref KeyName
+      ImageId: !FindInMap 
+        - RegionMap
+        - !Ref 'AWS::Region'
+        - 64
+      InstanceType: !Ref InstanceType
+      SubnetId: !Ref PublicSubnet
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      UserData:
+        'Fn::Base64': !Sub >
+          #!/bin/bash -x
+
+          yum install -y httpd php php-mysql mysql-server
+
+          systemctl start httpd
+
+          systemctl start mysqld
+
+          groupadd www
+
+          usermod -a -G www ec2-user
+
+
+          # Download wordpress site & move to http
+
+          cd /var/www/
+
+          curl -O https://wordpress.org/latest.tar.gz && tar -zxf latest.tar.gz
+
+          rm -rf /var/www/html
+
+          mv wordpress /var/www/html
+
+
+          # Set the permissions
+
+          chown -R root:www /var/www
+
+          chmod 2775 /var/www
+
+          find /var/www -type d -exec chmod 2775 {} +
+
+          find /var/www -type f -exec chmod 0664 {} +
+
+
+          # SE Linux permissive
+
+          # needed to make wp connect to DB over newtork
+
+          setsebool -P httpd_can_network_connect=1
+
+          setsebool httpd_can_network_connect_db on
+
+
+          echo "<h1> Welcome to Valaxy Cloudformation Demo</h1>" >>
+          /var/www/html/index.html   
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: fdc57ba6-658d-4271-824b-7c33022144e8        
+        
