@@ -1,0 +1,1667 @@
+Description: Create a variable number of EC2 instance resources.
+Parameters:
+  MasterNode:
+    Description: Specify the number of required master node
+    Type: Number
+    Default: 1
+  WorkerNode:
+    Description: Specify the number of required worker node
+    Type: Number
+    Default: 1    
+  ImageId:
+    Description: AMI for use with the EC2 instances
+    Type: String
+    Default: ami-0a23ccb2cdd9286bb
+  MasterInstanceType:
+    Description: Instance type for master node to launch EC2 instances.
+    Type: String
+    Default: t3.micro
+    AllowedValues:
+      - t3.micro
+      - t2.nano
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+      - m1.small
+      - m1.medium
+      - m1.large
+      - m1.xlarge
+      - m2.xlarge
+      - m2.2xlarge
+      - m2.4xlarge
+      - m3.medium
+      - m3.large
+      - m3.xlarge
+      - m3.2xlarge
+      - m4.large
+      - m4.xlarge
+      - m4.2xlarge
+      - m4.4xlarge
+      - m4.10xlarge
+      - c1.medium
+      - c1.xlarge
+      - c3.large
+      - c3.xlarge
+      - c3.2xlarge
+      - c3.4xlarge
+      - c3.8xlarge
+      - c4.large
+      - c4.xlarge
+      - c4.2xlarge
+      - c4.4xlarge
+      - c4.8xlarge
+      - g2.2xlarge
+      - g2.8xlarge
+      - r3.large
+      - r3.xlarge
+      - r3.2xlarge
+      - r3.4xlarge
+      - r3.8xlarge
+      - i2.xlarge
+      - i2.2xlarge
+      - i2.4xlarge
+      - i2.8xlarge
+      - d2.xlarge
+      - d2.2xlarge
+      - d2.4xlarge
+      - d2.8xlarge
+      - hi1.4xlarge
+      - hs1.8xlarge
+      - cr1.8xlarge
+      - cc2.8xlarge
+      - cg1.4xlarge
+      - m5zn.6xlarge	
+  WorkerInstanceType:
+    Description: Instance type for worker node to launch EC2 instances.
+    Type: String
+    Default: t3.micro
+    AllowedValues:
+      - t3.micro
+      - t2.nano
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+      - m1.small
+      - m1.medium
+      - m1.large
+      - m1.xlarge
+      - m2.xlarge
+      - m2.2xlarge
+      - m2.4xlarge
+      - m3.medium
+      - m3.large
+      - m3.xlarge
+      - m3.2xlarge
+      - m4.large
+      - m4.xlarge
+      - m4.2xlarge
+      - m4.4xlarge
+      - m4.10xlarge
+      - c1.medium
+      - c1.xlarge
+      - c3.large
+      - c3.xlarge
+      - c3.2xlarge
+      - c3.4xlarge
+      - c3.8xlarge
+      - c4.large
+      - c4.xlarge
+      - c4.2xlarge
+      - c4.4xlarge
+      - c4.8xlarge
+      - g2.2xlarge
+      - g2.8xlarge
+      - r3.large
+      - r3.xlarge
+      - r3.2xlarge
+      - r3.4xlarge
+      - r3.8xlarge
+      - i2.xlarge
+      - i2.2xlarge
+      - i2.4xlarge
+      - i2.8xlarge
+      - d2.xlarge
+      - d2.2xlarge
+      - d2.4xlarge
+      - d2.8xlarge
+      - hi1.4xlarge
+      - hs1.8xlarge
+      - cr1.8xlarge
+      - cc2.8xlarge
+      - cg1.4xlarge 
+      - m5zn.6xlarge	
+     
+  KeyName:
+    Description: The EC2 Key Pair to allow SSH access to the instances
+    Type: 'AWS::EC2::KeyPair::KeyName'
+    Default: region-virginia-training-demo-key
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+  InstancePublicIP:
+    Description: >-
+      Specifies whether to launch instances with public IP addresses in your
+      VPC.
+    Type: String
+    Default: 'True'
+    AllowedValues:
+      - 'False'
+      - 'True'
+  PrivateSubnetA:
+    Description: Subnet A ID
+    Type: String  
+    Default: subnet-114bd76a
+  PrivateSubnetB:
+    Description: Subnet B ID
+    Type: String
+    Default: subnet-4c907427
+  PrivateSubnetC:
+    Description: Subnet C ID
+    Type: String
+    Default: subnet-71e1ab3d
+  VPC:
+    Description: VPC ID
+    Type: String  
+    Default: vpc-4ec83725
+  WorkerStorage:
+    Description: Size of Disk 
+    Type: Number 
+    Default: 100
+  MasterStorage:
+    Description: Size of Disk 
+    Type: Number  
+    Default: 100
+Conditions:
+  Launch1: !Equals [1, 1]
+  Launch2: !Not [!Equals [1, !Ref WorkerNode]]
+  Launch3: !And
+  - !Not [!Equals [1, !Ref WorkerNode]]
+  - !Not [!Equals [2, !Ref WorkerNode]]
+  Launch4: !And
+  - !Not [!Equals [1, !Ref WorkerNode]]
+  - !Not [!Equals [2, !Ref WorkerNode]]
+  - !Not [!Equals [3, !Ref WorkerNode]]
+  Launch5: !And
+  - !Not [!Equals [1, !Ref WorkerNode]]
+  - !Not [!Equals [2, !Ref WorkerNode]]
+  - !Not [!Equals [3, !Ref WorkerNode]]
+  - !Not [!Equals [4, !Ref WorkerNode]]
+  Launch6: !And
+  - !Not [!Equals [1, !Ref WorkerNode]]
+  - !Not [!Equals [2, !Ref WorkerNode]]
+  - !Not [!Equals [3, !Ref WorkerNode]]
+  - !Not [!Equals [4, !Ref WorkerNode]]
+  - !Not [!Equals [5, !Ref WorkerNode]]
+  Launch7: !And
+  - !Not [!Equals [1, !Ref WorkerNode]]
+  - !Not [!Equals [2, !Ref WorkerNode]]
+  - !Not [!Equals [3, !Ref WorkerNode]]
+  - !Not [!Equals [4, !Ref WorkerNode]]
+  - !Not [!Equals [5, !Ref WorkerNode]]
+  - !Not [!Equals [6, !Ref WorkerNode]]
+  Launch8: !And
+  - !Not [!Equals [1, !Ref WorkerNode]]
+  - !Not [!Equals [2, !Ref WorkerNode]]
+  - !Not [!Equals [3, !Ref WorkerNode]]
+  - !Not [!Equals [4, !Ref WorkerNode]]
+  - !Not [!Equals [5, !Ref WorkerNode]]
+  - !Not [!Equals [6, !Ref WorkerNode]]
+  - !Not [!Equals [7, !Ref WorkerNode]]
+  Launch9: !Or
+  - !Equals [9, !Ref WorkerNode]
+  - !Equals [10, !Ref WorkerNode]
+  - !Equals [11, !Ref WorkerNode]
+  - !Equals [12, !Ref WorkerNode]
+  - !Equals [13, !Ref WorkerNode]
+  - !Equals [14, !Ref WorkerNode]
+  - !Equals [15, !Ref WorkerNode]
+  Launch10: !Or
+  - !Equals [10, !Ref WorkerNode]
+  - !Equals [11, !Ref WorkerNode]
+  - !Equals [12, !Ref WorkerNode]
+  - !Equals [13, !Ref WorkerNode]
+  - !Equals [14, !Ref WorkerNode]
+  - !Equals [15, !Ref WorkerNode]
+  Launch11: !Or
+  - !Equals [11, !Ref WorkerNode]
+  - !Equals [12, !Ref WorkerNode]
+  - !Equals [13, !Ref WorkerNode]
+  - !Equals [14, !Ref WorkerNode]
+  - !Equals [15, !Ref WorkerNode]
+  Launch12: !Or
+  - !Equals [12, !Ref WorkerNode]
+  - !Equals [13, !Ref WorkerNode]
+  - !Equals [14, !Ref WorkerNode]
+  - !Equals [15, !Ref WorkerNode]
+  Launch13: !Or
+  - !Equals [13, !Ref WorkerNode]
+  - !Equals [14, !Ref WorkerNode]
+  - !Equals [15, !Ref WorkerNode]
+  Launch14: !Or
+  - !Equals [14, !Ref WorkerNode]
+  - !Equals [15, !Ref WorkerNode]
+  Launch15: !Equals [15, !Ref WorkerNode]
+  Launch16: !Equals [1, 1]
+  Launch17: !Not [!Equals [1, !Ref MasterNode]]
+  Launch18: !And
+  - !Not [!Equals [1, !Ref MasterNode]]
+  - !Not [!Equals [2, !Ref MasterNode]]
+  Launch19: !And
+  - !Not [!Equals [1, !Ref MasterNode]]
+  - !Not [!Equals [2, !Ref MasterNode]]
+  - !Not [!Equals [3, !Ref MasterNode]]
+  Launch20: !And
+  - !Not [!Equals [1, !Ref MasterNode]]
+  - !Not [!Equals [2, !Ref MasterNode]]
+  - !Not [!Equals [3, !Ref MasterNode]]
+  - !Not [!Equals [4, !Ref MasterNode]]
+  Launch21: !Or
+  - !Equals [6, !Ref MasterNode]
+  - !Equals [7, !Ref MasterNode]
+  - !Equals [8, !Ref MasterNode]
+  - !Equals [9, !Ref MasterNode]
+  - !Equals [10, !Ref MasterNode]                                       
+  Launch22: !Or
+  - !Equals [7, !Ref MasterNode]
+  - !Equals [8, !Ref MasterNode]
+  - !Equals [9, !Ref MasterNode]
+  - !Equals [10, !Ref MasterNode]
+  Launch23: !Or
+  - !Equals [8, !Ref MasterNode]
+  - !Equals [9, !Ref MasterNode]
+  - !Equals [10, !Ref MasterNode]
+  Launch24: !Or
+  - !Equals [9, !Ref MasterNode]
+  - !Equals [10, !Ref MasterNode]
+  Launch25: !Equals [10, !Ref MasterNode]
+
+Resources:
+  Instance1:
+    Condition: Launch1
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref WorkerInstanceType
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: !Ref InstancePublicIP
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: "SecurityGroup"
+        SubnetId: 
+          Ref: "PrivateSubnetA"
+      KeyName: !Ref KeyName
+      Tags:
+         - Key: "Name"
+           Value: "Hadoop-Worker-1"
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: !Ref WorkerStorage
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+      
+  Instance2:
+    Condition: Launch2
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref WorkerInstanceType
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: !Ref InstancePublicIP
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: "SecurityGroup"
+        SubnetId: 
+          Ref: "PrivateSubnetB"
+      KeyName: !Ref KeyName
+      Tags:
+         - Key: "Name"
+           Value: "Hadoop-Worker-2"
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: !Ref WorkerStorage
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+  Instance3:
+    Condition: Launch3
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref WorkerInstanceType
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: !Ref InstancePublicIP
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: "SecurityGroup"
+        SubnetId: 
+          Ref: "PrivateSubnetC"
+      KeyName: !Ref KeyName
+      Tags:
+         - Key: "Name"
+           Value: "Hadoop-Worker-3"
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: !Ref WorkerStorage
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+  Instance4:
+    Condition: Launch4
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref WorkerInstanceType
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: !Ref InstancePublicIP
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: "SecurityGroup"
+        SubnetId: 
+          Ref: "PrivateSubnetA"
+      KeyName: !Ref KeyName
+      Tags:
+         - Key: "Name"
+           Value: "Hadoop-Worker-4"
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: !Ref WorkerStorage
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+  Instance5:
+    Condition: Launch5
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref WorkerInstanceType
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: !Ref InstancePublicIP
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: "SecurityGroup"
+        SubnetId: 
+          Ref: "PrivateSubnetB"
+      KeyName: !Ref KeyName
+      Tags:
+         - Key: "Name"
+           Value: "Hadoop-Worker-5"
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: !Ref WorkerStorage
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+  Instance6:
+    Condition: Launch6
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref WorkerInstanceType
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: !Ref InstancePublicIP
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: "SecurityGroup"
+        SubnetId: 
+          Ref: "PrivateSubnetC"
+      KeyName: !Ref KeyName
+      Tags:
+         - Key: "Name"
+           Value: "Hadoop-Worker-6"
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: !Ref WorkerStorage
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+  Instance7:
+    Condition: Launch7
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref WorkerInstanceType
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: !Ref InstancePublicIP
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: "SecurityGroup"
+        SubnetId: 
+          Ref: "PrivateSubnetA"
+      KeyName: !Ref KeyName
+      Tags:
+         - Key: "Name"
+           Value: "Hadoop-Worker-7"
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: !Ref WorkerStorage
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+  Instance8:
+    Condition: Launch8
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref WorkerInstanceType
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: !Ref InstancePublicIP
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: "SecurityGroup"
+        SubnetId: 
+          Ref: "PrivateSubnetB"
+      KeyName: !Ref KeyName
+      Tags:
+         - Key: "Name"
+           Value: "Hadoop-Worker-8"
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: !Ref WorkerStorage
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+  Instance9:
+    Condition: Launch9
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref WorkerInstanceType
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: !Ref InstancePublicIP
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: "SecurityGroup"
+        SubnetId: 
+          Ref: "PrivateSubnetC"
+      KeyName: !Ref KeyName
+      Tags:
+         - Key: "Name"
+           Value: "Hadoop-Worker-9"
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: !Ref WorkerStorage
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+  Instance10:
+    Condition: Launch10
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref WorkerInstanceType
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: !Ref InstancePublicIP
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: "SecurityGroup"
+        SubnetId: 
+          Ref: "PrivateSubnetA"
+      KeyName: !Ref KeyName
+      Tags:
+         - Key: "Name"
+           Value: "Hadoop-Worker-10"
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: !Ref WorkerStorage
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+
+  Instance11:
+    Condition: Launch11
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref WorkerInstanceType
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: !Ref InstancePublicIP
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: "SecurityGroup"
+        SubnetId: 
+          Ref: "PrivateSubnetB"
+      KeyName: !Ref KeyName
+      Tags:
+         - Key: "Name"
+           Value: "Hadoop-Worker-11"
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: !Ref WorkerStorage
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+
+  Instance12:
+    Condition: Launch12
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref WorkerInstanceType
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: !Ref InstancePublicIP
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: "SecurityGroup"
+        SubnetId: 
+          Ref: "PrivateSubnetC"
+      KeyName: !Ref KeyName
+      Tags:
+         - Key: "Name"
+           Value: "Hadoop-Worker-12"
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: !Ref WorkerStorage
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+  Instance13:
+    Condition: Launch13
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref WorkerInstanceType
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: !Ref InstancePublicIP
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: "SecurityGroup"
+        SubnetId: 
+          Ref: "PrivateSubnetA"
+      KeyName: !Ref KeyName
+      Tags:
+         - Key: "Name"
+           Value: "Hadoop-Worker-13"
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: !Ref WorkerStorage
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+  Instance14:
+    Condition: Launch14
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref WorkerInstanceType
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: !Ref InstancePublicIP
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: "SecurityGroup"
+        SubnetId: 
+          Ref: "PrivateSubnetB"
+      KeyName: !Ref KeyName
+      Tags:
+         - Key: "Name"
+           Value: "Hadoop-Worker-14"
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: !Ref WorkerStorage
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+  Instance15:
+    Condition: Launch15
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref WorkerInstanceType
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: !Ref InstancePublicIP
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: "SecurityGroup"
+        SubnetId: 
+          Ref: "PrivateSubnetC"
+      KeyName: !Ref KeyName
+      Tags:
+         - Key: "Name"
+           Value: "Hadoop-Worker-15"
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: !Ref WorkerStorage
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+  MasterInstance1:
+    Condition: Launch16
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref MasterInstanceType
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: !Ref InstancePublicIP
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: "SecurityGroup"
+        SubnetId: 
+          Ref: "PrivateSubnetA"
+      KeyName: !Ref KeyName
+      Tags:
+         - Key: "Name"
+           Value: "Hadoop-Master-1"
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: !Ref MasterStorage
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+      
+  MasterInstance2:
+    Condition: Launch17
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref MasterInstanceType
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: !Ref InstancePublicIP
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: "SecurityGroup"
+        SubnetId: 
+          Ref: "PrivateSubnetB"
+      KeyName: !Ref KeyName
+      Tags:
+         - Key: "Name"
+           Value: "Hadoop-Master-2"
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: !Ref MasterStorage
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+  MasterInstance3:
+    Condition: Launch18
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref MasterInstanceType
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: !Ref InstancePublicIP
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: "SecurityGroup"
+        SubnetId: 
+          Ref: "PrivateSubnetC"
+      KeyName: !Ref KeyName
+      Tags:
+         - Key: "Name"
+           Value: "Hadoop-Master-3"
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: !Ref MasterStorage
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+  MasterInstance4:
+    Condition: Launch19
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref MasterInstanceType
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: !Ref InstancePublicIP
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: "SecurityGroup"
+        SubnetId: 
+          Ref: "PrivateSubnetA"
+      KeyName: !Ref KeyName
+      Tags:
+         - Key: "Name"
+           Value: "Hadoop-Master-4"
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: !Ref MasterStorage
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+  MasterInstance5:
+    Condition: Launch20
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref MasterInstanceType
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: !Ref InstancePublicIP
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: "SecurityGroup"
+        SubnetId: 
+          Ref: "PrivateSubnetB"
+      KeyName: !Ref KeyName
+      Tags:
+         - Key: "Name"
+           Value: "Hadoop-Master-5"
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: !Ref MasterStorage
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+  MasterInstance6:
+    Condition: Launch21
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref MasterInstanceType
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: !Ref InstancePublicIP
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: "SecurityGroup"
+        SubnetId: 
+          Ref: "PrivateSubnetC"
+      KeyName: !Ref KeyName
+      Tags:
+         - Key: "Name"
+           Value: "Hadoop-Master-6"
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: !Ref MasterStorage
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+  MasterInstance7:
+    Condition: Launch22
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref MasterInstanceType
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: !Ref InstancePublicIP
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: "SecurityGroup"
+        SubnetId: 
+          Ref: "PrivateSubnetA"
+      KeyName: !Ref KeyName
+      Tags:
+         - Key: "Name"
+           Value: "Hadoop-Master-7"
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: !Ref MasterStorage
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+  MasterInstance8:
+    Condition: Launch23
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref MasterInstanceType
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: !Ref InstancePublicIP
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: "SecurityGroup"
+        SubnetId: 
+          Ref: "PrivateSubnetB"
+      KeyName: !Ref KeyName
+      Tags:
+         - Key: "Name"
+           Value: "Hadoop-Master-8"
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: !Ref MasterStorage
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+  MasterInstance9:
+    Condition: Launch24
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref MasterInstanceType
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: !Ref InstancePublicIP
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: "SecurityGroup"
+        SubnetId: 
+          Ref: "PrivateSubnetC"
+      KeyName: !Ref KeyName
+      Tags:
+         - Key: "Name"
+           Value: "Hadoop-Master-9"
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: !Ref MasterStorage
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+  MasterInstance10:
+    Condition: Launch25
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref MasterInstanceType
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: !Ref InstancePublicIP
+        DeviceIndex: "0"
+        GroupSet: 
+          - Ref: "SecurityGroup"
+        SubnetId: 
+          Ref: "PrivateSubnetA"
+      KeyName: !Ref KeyName
+      Tags:
+         - Key: "Name"
+           Value: "Hadoop-Master-10"
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: !Ref MasterStorage
+            DeleteOnTermination: 'true'
+            Encrypted: 'true'
+  
+  SecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable Only SSH From Anywhere
+      GroupName: Hadoop Security Group
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '8080'
+          ToPort: '8080'
+          CidrIp: 0.0.0.0/0
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: Hadoop Security Group
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 034a9a56-def6-4746-8e3c-34e8f2b9b81f      
+  NewVolume1:
+    Condition: Launch1 
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance1.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint1:
+    Condition: Launch1
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance1
+      VolumeId: !Ref NewVolume1
+      Device: /dev/xvdb
+  NewVolume2:
+    Condition: Launch1 
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance1.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint2:
+    Condition: Launch1
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance1
+      VolumeId: !Ref NewVolume2
+      Device: /dev/xvdc
+  NewVolume3:
+    Condition: Launch1
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance1.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint3:
+    Condition: Launch1
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance1
+      VolumeId: !Ref NewVolume3
+      Device: /dev/xvdd
+  NewVolume4:
+    Condition: Launch2
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance2.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint4:
+    Condition: Launch2
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance2
+      VolumeId: !Ref NewVolume4
+      Device: /dev/xvdb
+  NewVolume5:
+    Condition: Launch2
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance2.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint5:
+    Condition: Launch2
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance2
+      VolumeId: !Ref NewVolume5
+      Device: /dev/xvdc
+  NewVolume6:
+    Condition: Launch2
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance2.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint6:
+    Condition: Launch2
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance2
+      VolumeId: !Ref NewVolume6
+      Device: /dev/xvdd      
+  NewVolume7:
+    Condition: Launch3
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance3.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint7:
+    Condition: Launch3
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance3
+      VolumeId: !Ref NewVolume7
+      Device: /dev/xvdb
+  NewVolume8:
+    Condition: Launch3
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance3.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint8:
+    Condition: Launch3
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance3
+      VolumeId: !Ref NewVolume8
+      Device: /dev/xvdc
+  NewVolume9:
+    Condition: Launch3
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance3.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint9:
+    Condition: Launch3   
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance3
+      VolumeId: !Ref NewVolume9
+      Device: /dev/xvdd      
+  NewVolume10:
+    Condition: Launch4 
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance4.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint10:
+    Condition: Launch4
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance4
+      VolumeId: !Ref NewVolume10
+      Device: /dev/xvdb
+  NewVolume11:
+    Condition: Launch4 
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance4.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint11:
+    Condition: Launch4
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance4
+      VolumeId: !Ref NewVolume11
+      Device: /dev/xvdc
+  NewVolume12:
+    Condition: Launch4
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance4.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint12:
+    Condition: Launch4
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance4
+      VolumeId: !Ref NewVolume12
+      Device: /dev/xvdd
+  NewVolume13:
+    Condition: Launch5 
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance5.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint13:
+    Condition: Launch5
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance5
+      VolumeId: !Ref NewVolume13
+      Device: /dev/xvdb
+  NewVolume14:
+    Condition: Launch5 
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance5.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint14:
+    Condition: Launch5
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance5
+      VolumeId: !Ref NewVolume14
+      Device: /dev/xvdc
+  NewVolume15:
+    Condition: Launch5
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance5.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint15:
+    Condition: Launch5
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance5
+      VolumeId: !Ref NewVolume15
+      Device: /dev/xvdd      
+  NewVolume16:
+    Condition: Launch6 
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance6.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint16:
+    Condition: Launch5
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance6
+      VolumeId: !Ref NewVolume16
+      Device: /dev/xvdb
+  NewVolume17:
+    Condition: Launch6 
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance6.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint17:
+    Condition: Launch6
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance6
+      VolumeId: !Ref NewVolume17
+      Device: /dev/xvdc
+  NewVolume18:
+    Condition: Launch6
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance6.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint18:
+    Condition: Launch6
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance6
+      VolumeId: !Ref NewVolume18
+      Device: /dev/xvdd            
+  NewVolume19:
+    Condition: Launch7 
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance7.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint19:
+    Condition: Launch7
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance7
+      VolumeId: !Ref NewVolume19
+      Device: /dev/xvdb
+  NewVolume20:
+    Condition: Launch7 
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance7.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint20:
+    Condition: Launch7
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance7
+      VolumeId: !Ref NewVolume20
+      Device: /dev/xvdc
+  NewVolume21:
+    Condition: Launch7
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance7.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint21:
+    Condition: Launch7
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance7
+      VolumeId: !Ref NewVolume21
+      Device: /dev/xvdd            
+  NewVolume22:
+    Condition: Launch8
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance8.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint22:
+    Condition: Launch8
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance8
+      VolumeId: !Ref NewVolume22
+      Device: /dev/xvdb
+  NewVolume23:
+    Condition: Launch8 
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance8.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint23:
+    Condition: Launch8
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance8
+      VolumeId: !Ref NewVolume23
+      Device: /dev/xvdc
+  NewVolume24:
+    Condition: Launch8
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance8.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint24:
+    Condition: Launch8
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance8
+      VolumeId: !Ref NewVolume24
+      Device: /dev/xvdd            
+  NewVolume25:
+    Condition: Launch9 
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance9.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint25:
+    Condition: Launch9
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance9
+      VolumeId: !Ref NewVolume25
+      Device: /dev/xvdb
+  NewVolume26:
+    Condition: Launch9 
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance9.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint26:
+    Condition: Launch9
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance9
+      VolumeId: !Ref NewVolume26
+      Device: /dev/xvdc
+  NewVolume27:
+    Condition: Launch9
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance9.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint27:
+    Condition: Launch9
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance9
+      VolumeId: !Ref NewVolume27
+      Device: /dev/xvdd            
+  NewVolume28:
+    Condition: Launch10 
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance10.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint28:
+    Condition: Launch10
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance10
+      VolumeId: !Ref NewVolume28
+      Device: /dev/xvdb
+  NewVolume29:
+    Condition: Launch10 
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance10.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint29:
+    Condition: Launch10
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance10
+      VolumeId: !Ref NewVolume29
+      Device: /dev/xvdc
+  NewVolume30:
+    Condition: Launch10
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance10.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint30:
+    Condition: Launch10
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance10
+      VolumeId: !Ref NewVolume30
+      Device: /dev/xvdd    
+  NewVolume31:
+    Condition: Launch11 
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance11.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint31:
+    Condition: Launch11
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance11
+      VolumeId: !Ref NewVolume31
+      Device: /dev/xvdb
+  NewVolume32:
+    Condition: Launch11 
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance11.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint32:
+    Condition: Launch11
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance11
+      VolumeId: !Ref NewVolume32
+      Device: /dev/xvdc
+  NewVolume33:
+    Condition: Launch11
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance11.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint33:
+    Condition: Launch11
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance11
+      VolumeId: !Ref NewVolume33
+      Device: /dev/xvdd            
+  NewVolume34:
+    Condition: Launch12 
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance12.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint34:
+    Condition: Launch12
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance12
+      VolumeId: !Ref NewVolume34
+      Device: /dev/xvdb
+  NewVolume35:
+    Condition: Launch12 
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance12.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint35:
+    Condition: Launch12
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance12
+      VolumeId: !Ref NewVolume35
+      Device: /dev/xvdc
+  NewVolume36:
+    Condition: Launch12
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance12.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint36:
+    Condition: Launch12
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance12
+      VolumeId: !Ref NewVolume36
+      Device: /dev/xvdd            
+      
+  NewVolume37:
+    Condition: Launch13 
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance13.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint37:
+    Condition: Launch13
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance13
+      VolumeId: !Ref NewVolume37
+      Device: /dev/xvdb
+  NewVolume38:
+    Condition: Launch13 
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance13.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint38:
+    Condition: Launch13
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance13
+      VolumeId: !Ref NewVolume38
+      Device: /dev/xvdc
+  NewVolume39:
+    Condition: Launch13
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance13.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint39:
+    Condition: Launch13
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance13
+      VolumeId: !Ref NewVolume39
+      Device: /dev/xvdd            
+  NewVolume40:
+    Condition: Launch14 
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance14.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint40:
+    Condition: Launch14
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance14
+      VolumeId: !Ref NewVolume40
+      Device: /dev/xvdb
+  NewVolume41:
+    Condition: Launch14 
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance14.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint41:
+    Condition: Launch14
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance14
+      VolumeId: !Ref NewVolume41
+      Device: /dev/xvdc
+  NewVolume42:
+    Condition: Launch14
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance14.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint42:
+    Condition: Launch14
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance14
+      VolumeId: !Ref NewVolume42
+      Device: /dev/xvdd            
+  NewVolume43:
+    Condition: Launch15 
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance15.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint43:
+    Condition: Launch15
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance15
+      VolumeId: !Ref NewVolume43
+      Device: /dev/xvdb
+  NewVolume44:
+    Condition: Launch15 
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance15.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint44:
+    Condition: Launch15
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance15
+      VolumeId: !Ref NewVolume44
+      Device: /dev/xvdc
+  NewVolume45:
+    Condition: Launch15
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      Size: !Ref WorkerStorage
+      AvailabilityZone: !GetAtt Instance15.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+  MountPoint45:
+    Condition: Launch15
+    Type: 'AWS::EC2::VolumeAttachment'
+    Properties:
+      InstanceId: !Ref Instance15
+      VolumeId: !Ref NewVolume45
+      Device: /dev/xvdd
+
